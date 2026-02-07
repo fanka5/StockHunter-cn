@@ -65,9 +65,9 @@ StockHunter-cn/
 │   ├── downloader.py    # 数据下载引擎 (Baostock)
 │   ├── data_analyzer.py # 技术指标计算 (Pandas-TA)
 │   └── llm_agent.py     # AI 智能分析代理
-├── data/                # 本地数据存储 (建议加入 .gitignore)
+├── data/                # 本地数据存储
 ├── app.py               # Streamlit 主程序
-├── config.py            # 配置文件 (请勿上传到 GitHub)
+├── config.py            # 配置文件
 ├── requirements.txt     # 依赖列表
 └── README.md            # 说明文档
 ```
