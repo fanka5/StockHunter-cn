@@ -1,0 +1,8 @@
+streamlit
+pandas
+pandas_ta
+baostock
+requests
+python-dotenv
+tqdm
+plotly
