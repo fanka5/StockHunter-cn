@@ -263,7 +263,7 @@ with st.sidebar:
             format_func=lambda x: "⚡ 仅自选股 (极速)" if x == "watchlist" else "🔄 全市场 (全量)"
         )
 
-        if st.button("📥 开始同步数据", type="secondary", use_container_width=True):
+        if st.button("📥 开始同步数据", type="secondary", width='stretch'):
             target_codes = None
             if dl_scope == "watchlist":
                 if not watchlist:
@@ -297,10 +297,10 @@ with st.sidebar:
                                   format_func=lambda x: "仅自选股" if x == "watchlist_only" else "全市场+自选")
 
         st.caption("🤖 LLM 设置")
-        max_ai_stocks = st.number_input("AI分析最大数量 (非自选)", min_value=1, max_value=50, value=8)
+        max_ai_stocks = st.number_input("AI分析最大数量 (非自选)", min_value=1, max_value=100, value=8)
 
         st.divider()
-        btn_start = st.button("🚀 开始分析", type="primary", use_container_width=True)
+        btn_start = st.button("🚀 开始分析", type="primary", width='stretch')
 
 # ===========================
 # 4. 主界面逻辑 (分析流程)
@@ -329,19 +329,33 @@ if btn_start:
 
         if analysis_mode == "current" and res_file.exists():
             try:
-                # 修复 read_csv 警告
-                df_old = pd.read_csv(str(res_file))
+                # 1. 读取旧文件，强制'代码'列为字符串（防止纯数字代码被识别为int导致匹配不上）
+                df_old = pd.read_csv(str(res_file), dtype={'代码': str})
+
+                # 2. 确保列存在
                 if 'AI建议' in df_old.columns:
-                    cache = df_old.set_index('代码')[['AI建议', 'AI点评']].to_dict('index')
-                    def fill_cache(row):
-                        c = row['代码']
-                        if c in cache and pd.notna(cache[c]['AI建议']) and cache[c]['AI建议'] != '':
-                            return cache[c]['AI建议'], cache[c]['AI点评']
-                        return '', ''
-                    df_tech[['AI建议', 'AI点评']] = df_tech.apply(fill_cache, axis=1, result_type='expand')
-                    status_text.write("♻️ 已加载部分缓存...")
-            except:
-                pass
+                    # 填充 NaN 为空字符串，防止后续报错
+                    df_old['AI建议'] = df_old['AI建议'].fillna('')
+                    df_old['AI点评'] = df_old['AI点评'].fillna('')
+
+                    # 3. 提取有效的缓存 (AI建议不为空的)
+                    valid_cache = df_old[df_old['AI建议'].str.strip() != '']
+                    # 建立字典映射: 代码 -> {建议, 点评}
+                    cache_map = valid_cache.set_index('代码')[['AI建议', 'AI点评']].to_dict('index')
+
+                    # 4. 填回当前数据 (df_tech)
+                    cached_count = 0
+                    for idx, row in df_tech.iterrows():
+                        code = str(row['代码'])  # 确保转为字符串比较
+                        if code in cache_map:
+                            df_tech.at[idx, 'AI建议'] = cache_map[code]['AI建议']
+                            df_tech.at[idx, 'AI点评'] = cache_map[code]['AI点评']
+                            cached_count += 1
+
+                    if cached_count > 0:
+                        status_text.write(f"♻️ 已复用 {cached_count} 条今日已分析结果，不再重复请求...")
+            except Exception as e:
+                print(f"⚠️ 加载缓存失败: {e}")
 
         df_vip = df_tech[df_tech['is_watchlist'] == True].copy()
         df_others = df_tech[df_tech['is_watchlist'] == False].copy()
@@ -499,7 +513,7 @@ with col_detail:
             m_date = selected_row.get('回测日期') if is_backtest_file else None
             # 开启鼠标滚轮缩放
             fig = plot_k_line(df_stock, code, name, m_date)
-            st.plotly_chart(fig, use_container_width=True, config={'scrollZoom': True})
+            st.plotly_chart(fig, width='stretch', config={'scrollZoom': True})
         else:
             st.warning("本地暂无该股票K线数据")
 
