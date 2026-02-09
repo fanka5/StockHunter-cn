@@ -20,6 +20,7 @@ StockHunter-AI 是一个基于 Python 的本地化 A 股分析工具。它结合
   - 基于 Streamlit 构建的现代化 Web 界面。
   - 支持交互式 K 线图（缩放/平移/十字光标）。
   - 便捷的自选股管理及历史回测报告查看功能。
+
 **界面示例**
 <img width="3105" height="1845" alt="image" src="https://github.com/user-attachments/assets/8126f02d-b6cb-4214-b884-a98d7d94a018" />
 
